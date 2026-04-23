@@ -11,6 +11,10 @@ class SpotShockResult:
     shock_pct: float
     total_unrealized_pnl_mid: float
     total_unrealized_pnl_close: float
+    base_total_unrealized_pnl_mid: float
+    base_total_unrealized_pnl_close: float
+    delta_mid_pnl: float
+    delta_close_pnl: float
 
 
 # Placeholder rule for first skeleton:
@@ -41,9 +45,14 @@ def run_spot_shock(
             source=quote.source,
         )
 
+    base_valuation = value_portfolio(positions, quotes)
     valuation = value_portfolio(positions, shocked_quotes)
     return SpotShockResult(
         shock_pct=shock_pct,
         total_unrealized_pnl_mid=valuation.total_unrealized_pnl_mid,
         total_unrealized_pnl_close=valuation.total_unrealized_pnl_close,
+        base_total_unrealized_pnl_mid=base_valuation.total_unrealized_pnl_mid,
+        base_total_unrealized_pnl_close=base_valuation.total_unrealized_pnl_close,
+        delta_mid_pnl=valuation.total_unrealized_pnl_mid - base_valuation.total_unrealized_pnl_mid,
+        delta_close_pnl=valuation.total_unrealized_pnl_close - base_valuation.total_unrealized_pnl_close,
     )

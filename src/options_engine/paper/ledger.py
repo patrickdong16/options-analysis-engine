@@ -51,10 +51,13 @@ class JournalEntry:
 class PaperLedger:
     positions: dict[str, Position] = field(default_factory=dict)
     journal: list[JournalEntry] = field(default_factory=list)
+    realized_pnl: float = 0.0
+    total_fees: float = 0.0
 
     def apply_fill(self, fill: PaperFill) -> None:
         existing = self.positions.get(fill.contract.contract_id)
         fill_side = "long" if fill.side == "buy" else "short"
+        self.total_fees += fill.fees
 
         if existing is None:
             self.positions[fill.contract.contract_id] = Position(
@@ -103,6 +106,11 @@ class PaperLedger:
             )
             return
 
+        closed_qty = min(existing.quantity, fill.quantity)
+        sign = 1 if existing.side == "long" else -1
+        gross_realized = (fill.execution_price - existing.average_open_price) * sign * closed_qty * fill.contract.multiplier
+        self.realized_pnl += gross_realized - fill.fees
+
         remaining_qty = existing.quantity - fill.quantity
         self.journal.append(
             JournalEntry(
@@ -113,6 +121,7 @@ class PaperLedger:
                 quantity=fill.quantity,
                 execution_price=fill.execution_price,
                 fees=fill.fees,
+                note=f"realized_pnl={gross_realized - fill.fees:.2f}",
             )
         )
         if remaining_qty > 0:

@@ -48,3 +48,5 @@ def test_paper_ledger_open_and_close_flow():
     assert len(ledger.journal) == 2
     assert ledger.journal[0].action == "open"
     assert ledger.journal[1].action == "close"
+    assert round(ledger.realized_pnl, 2) == round(((45.0 - 40.0) * 1 * 1 * 100) - 1.0, 2)
+    assert round(ledger.total_fees, 2) == 2.0
